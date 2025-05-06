@@ -33,18 +33,17 @@ document.addEventListener('DOMContentLoaded', () => {
         colorDark = '#FFFFFF';
         colorLight = '#000000';
         break;
-      default: // transparent
+      default: // transparent (simulate transparency)
         colorDark = '#000000';
-        colorLight = 'rgba(0,0,0,0)';
+        colorLight = '#FFFFFF'; // Draw on white, then clear background
     }
 
-    // Clear canvas and reset
     const ctx = canvas.getContext('2d');
     canvas.width = 300;
     canvas.height = 300;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // Generate QR Code
+    // Generate QR Code on canvas
     new QRCode(canvas, {
       text: url,
       width: 300,
@@ -53,6 +52,26 @@ document.addEventListener('DOMContentLoaded', () => {
       colorLight: colorLight,
       correctLevel: QRCode.CorrectLevel.H
     });
+
+    // Simulate transparency by clearing background pixels
+    if (background === 'transparent') {
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const data = imageData.data;
+
+      for (let i = 0; i < data.length; i += 4) {
+        const r = data[i];
+        const g = data[i + 1];
+        const b = data[i + 2];
+        const a = data[i + 3];
+
+        // If pixel is white, make it transparent
+        if (r === 255 && g === 255 && b === 255) {
+          data[i + 3] = 0;
+        }
+      }
+
+      ctx.putImageData(imageData, 0, 0);
+    }
 
     // Handle logo overlay
     if (includeLogo && logoFile) {
@@ -63,15 +82,22 @@ document.addEventListener('DOMContentLoaded', () => {
           const size = canvas.width * 0.25;
           const x = (canvas.width - size) / 2;
           const y = (canvas.height - size) / 2;
+
           ctx.drawImage(img, x, y, size, size);
-          downloadLink.href = canvas.toDataURL('image/png');
-          downloadLink.classList.remove('hidden');
+          finalizeDownload();
         };
         img.src = event.target.result;
       };
       reader.readAsDataURL(logoFile);
     } else {
-      downloadLink.href = canvas.toDataURL('image/png');
+      finalizeDownload();
+    }
+
+    function finalizeDownload() {
+      const random = Math.floor(Math.random() * 10000);
+      const dataURL = canvas.toDataURL('image/png');
+      downloadLink.href = dataURL;
+      downloadLink.download = `qrcode-${random}.png`;
       downloadLink.classList.remove('hidden');
     }
   });
