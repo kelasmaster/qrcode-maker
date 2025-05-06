@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>QR Code Maker</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      text-align: center;
+      background: #f0f0f0;
+    }
+    .container {
+      max-width: 500px;
+      margin: auto;
+      background: #fff;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    canvas {
+      margin-top: 20px;
+      border: 1px solid #ccc;
+      max-width: 100%;
+    }
+    input, select, button {
+      display: block;
+      width: 100%;
+      margin: 10px 0;
+      padding: 10px;
+      font-size: 16px;
+    }
+    #download-link {
+      display: inline-block;
+      margin-top: 20px;
+      text-decoration: none;
+      color: #007BFF;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>QR Code Maker</h1>
+    <form id="qrcode-form">
+      <input type="text" id="url-input" placeholder="Enter URL (e.g. https://example.com)" required />
+      <select id="background-select">
+        <option value="light">White Background</option>
+        <option value="dark">Black Background</option>
+      </select>
+      <label><input type="checkbox" id="logo-checkbox" /> Add Logo</label>
+      <input type="file" id="logo-input" accept="image/*" style="display:none" />
+      <button type="submit">Generate QR Code</button>
+    </form>
+
+    <canvas id="qrcode-canvas" width="300" height="300"></canvas>
+    <a id="download-link" download class="hidden">Download QR Code</a>
+  </div>
+
+  <!-- Use reliable QR code generator -->
+  <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const form = document.getElementById('qrcode-form');
+      const urlInput = document.getElementById('url-input');
+      const backgroundSelect = document.getElementById('background-select');
+      const logoCheckbox = document.getElementById('logo-checkbox');
+      const logoInput = document.getElementById('logo-input');
+      const canvas = document.getElementById('qrcode-canvas');
+      const ctx = canvas.getContext('2d');
+      const downloadLink = document.getElementById('download-link');
+
+      logoCheckbox.addEventListener('change', () => {
+        logoInput.style.display = logoCheckbox.checked ? 'block' : 'none';
+      });
+
+      form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const url = urlInput.value.trim();
+        const background = backgroundSelect.value;
+        const includeLogo = logoCheckbox.checked;
+        const logoFile = logoInput.files[0];
+
+        if (!url) {
+          alert('Please enter a valid URL.');
+          return;
+        }
+
+        // Clear canvas
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // Generate QR Code
+        const qr = qrcode(0, 'H');
+        qr.addData(url);
+        qr.make();
+
+        const size = canvas.width;
+        const cellSize = size / qr.getModuleCount();
+
+        // Draw QR
+        for (let y = 0; y < qr.getModuleCount(); y++) {
+          for (let x = 0; x < qr.getModuleCount(); x++) {
+            ctx.fillStyle = qr.isDark(x, y) ? '#000000' : '#FFFFFF';
+            ctx.fillRect(x * cellSize, y * cellSize, cellSize, cellSize);
+          }
+        }
+
+        // Overlay logo if selected
+        if (includeLogo && logoFile) {
+          const reader = new FileReader();
+          reader.onload = function(e) {
+            const img = new Image();
+            img.onload = function() {
+              const logoSize = size * 0.3;
+              const x = (size - logoSize) / 2;
+              const y = (size - logoSize) / 2;
+              ctx.drawImage(img, x, y, logoSize, logoSize);
+              finalizeDownload();
+            };
+            img.src = e.target.result;
+          };
+          reader.readAsDataURL(logoFile);
+        } else {
+          finalizeDownload();
+        }
+      });
+
+      function finalizeDownload() {
+        const random = Math.floor(Math.random() * 10000);
+        downloadLink.href = canvas.toDataURL('image/png');
+        downloadLink.download = `qrcode-${random}.png`;
+        downloadLink.classList.remove('hidden');
+      }
+    });
+  </script>
+</body>
+</html>
