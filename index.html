@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>QR Code Maker</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="container">
+    <h1>QR Code Maker</h1>
+    <form id="qrcode-form">
+      <label for="url-input">Enter URL:</label>
+      <input type="text" id="url-input" placeholder="https://example.com" required />
+
+      <label for="background-select">Background:</label>
+      <select id="background-select">
+        <option value="light">Light</option>
+        <option value="dark">Dark</option>
+        <option value="transparent">Transparent</option>
+      </select>
+
+      <label><input type="checkbox" id="logo-checkbox" /> Add Logo</label>
+
+      <div id="logo-upload" class="hidden">
+        <label for="logo-input">Upload Logo:</label>
+        <input type="file" id="logo-input" accept="image/*" />
+      </div>
+
+      <button type="submit">Generate QR Code</button>
+    </form>
+
+    <div class="canvas-container">
+      <canvas id="qrcode-canvas"></canvas>
+    </div>
+
+    <a id="download-link" download="qrcode.png" class="hidden">Download QR Code</a>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
