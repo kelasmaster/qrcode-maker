@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>QR Code Maker</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      background: #f0f0f0;
+    }
+
+    .container {
+      max-width: 500px;
+      margin: auto;
+      background: #fff;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+
+    canvas {
+      margin-top: 20px;
+      border: 1px solid #ccc;
+      max-width: 100%;
+    }
+
+    input, select, button {
+      display: block;
+      width: 100%;
+      margin: 10px 0;
+      padding: 10px;
+      font-size: 16px;
+    }
+
+    #download-link {
+      display: inline-block;
+      margin-top: 20px;
+      text-decoration: none;
+      color: #007BFF;
+      font-weight: bold;
+      border: 1px solid #007BFF;
+      padding: 10px 20px;
+      border-radius: 5px;
+    }
+
+    #notification {
+      margin-top: 10px;
+      font-weight: bold;
+      color: green;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>QR Code Maker</h1>
+    <form id="qrcode-form">
+      <input type="text" id="url-input" placeholder="Enter URL (e.g. https://example.com)" required />
+      <select id="background-select">
+        <option value="light">White Background</option>
+        <option value="dark">Black Background</option>
+      </select>
+      <button type="submit">Generate QR Code</button>
+    </form>
+
+    <canvas id="qrcode-canvas" width="300" height="300"></canvas>
+    <a id="download-link" class="hidden" download>Download QR Code</a>
+    <div id="notification">✅ QR Code Saved!</div>
+  </div>
+
+  <!-- QR Code Library -->
+  <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const form = document.getElementById('qrcode-form');
+      const urlInput = document.getElementById('url-input');
+      const backgroundSelect = document.getElementById('background-select');
+      const canvas = document.getElementById('qrcode-canvas');
+      const ctx = canvas.getContext('2d');
+      const downloadLink = document.getElementById('download-link');
+      const notification = document.getElementById('notification');
+
+      form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const url = urlInput.value.trim();
+        const background = backgroundSelect.value;
+
+        if (!url) {
+          alert('Please enter a valid URL.');
+          return;
+        }
+
+        // Clear canvas
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // Generate QR Code
+        const qr = qrcode(0, 'H');
+        qr.addData(url);
+        qr.make();
+
+        const size = canvas.width;
+        const cellSize = size / qr.getModuleCount();
+
+        // Determine colors based on background
+        let darkColor, lightColor;
+        if (background === 'dark') {
+          darkColor = '#FFFFFF';  // White QR on black
+          lightColor = '#000000';
+        } else {
+          darkColor = '#000000';  // Black QR on white
+          lightColor = '#FFFFFF';
+        }
+
+        // Draw QR Code
+        for (let y = 0; y < qr.getModuleCount(); y++) {
+          for (let x = 0; x < qr.getModuleCount(); x++) {
+            ctx.fillStyle = qr.isDark(x, y) ? darkColor : lightColor;
+            ctx.fillRect(x * cellSize, y * cellSize, cellSize, cellSize);
+          }
+        }
+
+        // Show download button
+        const random = Math.floor(Math.random() * 10000);
+        downloadLink.href = canvas.toDataURL('image/png');
+        downloadLink.download = `qrcode-${random}.png`;
+        downloadLink.classList.remove('hidden');
+      });
+
+      // Show notification on download
+      downloadLink.addEventListener('click', () => {
+        notification.style.display = 'block';
+        setTimeout(() => {
+          notification.style.display = 'none';
+        }, 2000); // Hide after 2 seconds
+      });
+    });
+  </script>
+</body>
+</html>
