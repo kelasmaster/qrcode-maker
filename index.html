@@ -58,7 +58,7 @@
   <div class="container">
     <h1>QR Code Maker</h1>
     <form id="qrcode-form">
-      <input type="text" id="url-input" placeholder="Enter URL (e.g. https://example.com)" required />
+      <input type="text" id="url-input" placeholder="Enter URL (e.g. https://wa.me/6285773009666)" required />
       <select id="background-select">
         <option value="light">White Background</option>
         <option value="dark">Black Background</option>
@@ -75,68 +75,81 @@
   <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', () => {
-      const form = document.getElementById('qrcode-form');
-      const urlInput = document.getElementById('url-input');
-      const backgroundSelect = document.getElementById('background-select');
-      const canvas = document.getElementById('qrcode-canvas');
-      const ctx = canvas.getContext('2d');
-      const downloadLink = document.getElementById('download-link');
-      const notification = document.getElementById('notification');
+  const form = document.getElementById('qrcode-form');
+  const urlInput = document.getElementById('url-input');
+  const backgroundSelect = document.getElementById('background-select');
+  const canvas = document.getElementById('qrcode-canvas');
+  const ctx = canvas.getContext('2d');
+  const downloadLink = document.getElementById('download-link');
+  const notification = document.getElementById('notification');
 
-      form.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const url = urlInput.value.trim();
-        const background = backgroundSelect.value;
+  // Constants
+  const CANVAS_SIZE = 300;
+  const QUIET_ZONE = 0.1; // 10% of QR size
 
-        if (!url) {
-          alert('Please enter a valid URL.');
-          return;
-        }
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const url = urlInput.value.trim();
+    const background = backgroundSelect.value;
 
-        // Clear canvas
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
+    if (!url) {
+      alert('Please enter a valid URL.');
+      return;
+    }
 
-        // Generate QR Code
-        const qr = qrcode(0, 'H');
-        qr.addData(url);
-        qr.make();
+    // Clear canvas
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        const size = canvas.width;
-        const cellSize = size / qr.getModuleCount();
+    // Generate QR Code
+    const qr = qrcode(0, 'H');
+    qr.addData(url);
+    qr.make();
 
-        // Determine colors based on background
-        let darkColor, lightColor;
-        if (background === 'dark') {
-          darkColor = '#FFFFFF';  // White QR on black
-          lightColor = '#000000';
-        } else {
-          darkColor = '#000000';  // Black QR on white
-          lightColor = '#FFFFFF';
-        }
+    const moduleCount = qr.getModuleCount();
+    const qrSize = CANVAS_SIZE * (1 - QUIET_ZONE * 2);
+    const cellSize = Math.floor(qrSize / moduleCount);
+    const offset = Math.floor(CANVAS_SIZE * QUIET_ZONE);
 
-        // Draw QR Code
-        for (let y = 0; y < qr.getModuleCount(); y++) {
-          for (let x = 0; x < qr.getModuleCount(); x++) {
-            ctx.fillStyle = qr.isDark(x, y) ? darkColor : lightColor;
-            ctx.fillRect(x * cellSize, y * cellSize, cellSize, cellSize);
-          }
-        }
+    // Set colors based on background
+    let darkColor = '#000000';
+    let lightColor = '#FFFFFF';
+    if (background === 'dark') {
+      darkColor = '#FFFFFF';
+      lightColor = '#000000';
+    }
 
-        // Show download button
-        const random = Math.floor(Math.random() * 10000);
-        downloadLink.href = canvas.toDataURL('image/png');
-        downloadLink.download = `qrcode-${random}.png`;
-        downloadLink.classList.remove('hidden');
-      });
+    // Fill background
+    ctx.fillStyle = lightColor;
+    ctx.fillRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
 
-      // Show notification on download
-      downloadLink.addEventListener('click', () => {
-        notification.style.display = 'block';
-        setTimeout(() => {
-          notification.style.display = 'none';
-        }, 2000); // Hide after 2 seconds
-      });
-    });
+    // Draw QR Code
+    for (let y = 0; y < moduleCount; y++) {
+      for (let x = 0; x < moduleCount; x++) {
+        ctx.fillStyle = qr.isDark(x, y) ? darkColor : lightColor;
+        ctx.fillRect(
+          offset + x * cellSize,
+          offset + y * cellSize,
+          cellSize,
+          cellSize
+        );
+      }
+    }
+
+    // Show download button
+    const random = Math.floor(Math.random() * 10000);
+    downloadLink.href = canvas.toDataURL('image/png');
+    downloadLink.download = `qrcode-${random}.png`;
+    downloadLink.classList.remove('hidden');
+  });
+
+  // Notification on download
+  downloadLink.addEventListener('click', () => {
+    notification.style.display = 'block';
+    setTimeout(() => {
+      notification.style.display = 'none';
+    }, 2000);
+  });
+});
   </script>
 </body>
 </html>
